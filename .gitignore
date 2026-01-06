@@ -46,7 +46,7 @@ media/
 app/utils/__pycache__/
 app/tools/__pycache__/
 app/tools/scene/__pycache__/
-
+app/__pycache__/
 # Cache files
 *.json.cache
 cache.json
