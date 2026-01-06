@@ -1,8 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/1584795214_1063312029_223132457.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_1817734200_2219723532.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_3225186566_1310395976.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_535635031_4126032213.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_4267128565_268095415.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_1006519388_1267059639.mp4'
-file 'file:/home/nureyni/dev/mathConcept/app/media/videos/test_voiceover/480p15/partial_movie_files/TestVoiceover/4072820271_4217992463_2477432628.mp4'
