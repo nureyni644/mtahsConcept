@@ -1,0 +1,17 @@
+[project]
+name = "mathconcept"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langchain>=1.2.0",
+    "langchain-nvidia-ai-endpoints>=1.0.0",
+    "langgraph>=1.0.5",
+    "langgraph-api>=0.6.11",
+    "langgraph-cli>=0.4.11",
+    "python-dotenv==0.21.0",
+    "manim>=0.18.0",
+    "edge-tts>=6.1.9",
+    "manim-voiceover[azure,edge,gtts]>=0.3.7",
+]
