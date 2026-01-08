@@ -45,7 +45,8 @@ media/
 # Voiceover cache
 app/utils/__pycache__/
 app/tools/__pycache__/
-app/tools/scene/__pycache__/
+app/tools/scene/*
+!app/tools/scene/scene.py
 app/__pycache__/
 # Cache files
 *.json.cache

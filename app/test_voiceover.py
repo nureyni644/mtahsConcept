@@ -23,3 +23,36 @@ class TestVoiceover(VoiceoverScene):
             self.play(Transform(circle, square))
         
         self.wait(1)
+
+
+
+
+class TheoremePythagore(VoiceoverScene):
+    def construct(self):
+        # Initialiser le service de synthèse vocale
+        self.set_speech_service(GTTSService(lang="fr"))
+        
+        # Créer un triangle rectangle
+        triangle = Polygon(
+            ORIGIN, RIGHT * 3, RIGHT * 3 + UP * 4,
+            color=BLUE
+        )
+        
+        with self.voiceover(text="Voici un triangle rectangle") as tracker:
+            self.play(Create(triangle))
+            self.wait(tracker.duration)
+        
+        # Ajouter les labels des côtés
+        a_label = MathTex("a").next_to(triangle, DOWN)
+        b_label = MathTex("b").next_to(triangle, RIGHT)
+        c_label = MathTex("c").move_to(triangle.get_center() + LEFT * 2)
+        
+        with self.voiceover(text="Nommons les côtés a, b et c") as tracker:
+            self.play(Write(a_label), Write(b_label), Write(c_label))
+        
+        # Afficher la formule
+        formule = MathTex("a^2 + b^2 = c^2")
+        formule.to_edge(UP)
+        
+        with self.voiceover(text="Le théorème de Pythagore nous dit que a carré plus b carré égale c carré") as tracker:
+            self.play(Write(formule))

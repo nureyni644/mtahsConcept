@@ -7,6 +7,7 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, ToolMessage
 from app.tools.manim import generate_manim_script, execute_manim_with_audio
+from app.tools.search import search_solution
 import re
 load_dotenv()
 
@@ -18,23 +19,26 @@ client = ChatNVIDIA(
     max_completion_tokens=8192,  # Augmenté pour éviter la troncature
 )
 
-tools = [generate_manim_script, execute_manim_with_audio]
+tools = [generate_manim_script, execute_manim_with_audio, search_solution]
 llm_with_tools = client.bind_tools(tools)
 
-SYSTEM_PROMPT = """Tu es un assistant spécialisé dans la création de vidéos éducatives Manim.
+SYSTEM_PROMPT = """Tu es un assistant spécialisé dans la création de vidéos éducatives Manim (manim-voiceover).
 
-WORKFLOW OBLIGATOIRE pour créer une vidéo :
-1. TOUJOURS appeler d'abord l'outil `generate_manim_script` avec le concept demandé
-2. ENSUITE appeler l'outil `execute_manim_with_audio` avec les 3 valeurs retournées:
-   - code: le code Python retourné
-   - narration: le texte de narration retourné  
-   - math_scene: le class_name retourné
+                    WORKFLOW OBLIGATOIRE pour créer une vidéo :
+                    1. TOUJOURS appeler d'abord l'outil `generate_manim_script` avec le concept demandé
+                    2. ENSUITE appeler l'outil `execute_manim_with_audio` avec les des valeurs retournées:
+                    - code: le code Python retourné
+                    - math_scene: le class_name retourné
 
-IMPORTANT:
-- Tu DOIS appeler les deux outils dans cet ordre
-- Ne génère JAMAIS de code toi-même, utilise TOUJOURS generate_manim_script
-- Après execute_manim_with_audio, indique à l'utilisateur le résultat
-"""
+                    IMPORTANT:
+                    - Tu DOIS appeler les deux outils dans cet ordre
+                    - Ne génère JAMAIS de code toi-même, utilise TOUJOURS generate_manim_script
+                    - Après execute_manim_with_audio, indique à l'utilisateur le résultat
+                    
+                    EN CAS D'ERREUR:
+                    - Si l'exécution échoue, utilise l'outil `search_solution` pour trouver comment corriger l'erreur.
+                    - Analyse l'erreur, cherche une solution, puis réessaie avec `generate_manim_script` en appliquant la correction.
+                """
 
 def parse_tool_call_from_content(content: str) -> dict | None:
     """Parse un tool call depuis le content si le modèle l'a mis là par erreur."""
@@ -72,24 +76,67 @@ def agent(state: MessagesState):
     
     return {"messages": [response]}
 
+def sendError(state: MessagesState):
+    messages = state['messages']
+    # recuperer le dernier ToolMessage
+    last_tool_message = messages[-1] if messages and isinstance(messages[-1], ToolMessage) else None
+
+    if last_tool_message:
+        try:
+            content = last_tool_message.content
+            # Tenter de parser le JSON
+            data = json.loads(content)
+            is_error = False
+            
+            if isinstance(data, dict):
+                # Vérifier si c'est une erreur explicite (execute_manim_with_audio)
+                if data.get("success") is False:
+                    is_error = True
+                # Vérifier si le code généré est une erreur (generate_manim_script)
+                elif "code" in data and str(data["code"]).strip().startswith("# Erreur"):
+                    is_error = True
+            
+            if is_error:
+                print(f"Erreur détectée: {content}")        
+                return {"messages": [
+                    AIMessage(
+                        content=f"""Le résultat de l'exécution de la vidéo est une erreur. 
+                            La vidéo n'a pas pu être générée correctement. 
+                            Détails: {content}
+                            REPRENDRE LE PROCESSUS.
+                            """)]}
+        except json.JSONDecodeError:
+            pass
+        
+    return {"messages": []}
+
 builder = StateGraph(MessagesState)
 builder.add_node("agent", agent)
 builder.add_node("tools", ToolNode(tools))
-
+builder.add_node("sendError", sendError)
 builder.add_edge(START, "agent")
 builder.add_conditional_edges(
     "agent",
     tools_condition,
 )
-builder.add_edge("tools", "agent")
+builder.add_edge("tools", "sendError")
+builder.add_edge("sendError", "agent")
 
 graph = builder.compile()
 
 if __name__ == "__main__":
-    result = graph.invoke(
-        {"messages": [HumanMessage(content="Explique le concept de limite")]},
-        {"recursion_limit": 15}
-    )
+    import sys
+    
+    if sys.argv[1]:
+        result = graph.invoke(
+            {"messages": [HumanMessage(content=sys.argv[1])]},
+            {"recursion_limit": 50}
+        )
+    else:
+        result = graph.invoke(
+            {"messages": [HumanMessage(content="Explique le repere cartesien et la notion de vecteur unitaire")]},
+            {"recursion_limit": 50}
+        )
     
     # Afficher le résultat final
     for msg in result["messages"]:
